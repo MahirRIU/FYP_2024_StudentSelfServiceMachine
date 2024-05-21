@@ -1,0 +1,102 @@
+/* Reset styles for HTML elements */
+html, body, h1, h2, h3, h4, h5, h6, p, ul, ol, li, a {
+  margin: 0;
+  padding: 0;
+  text-decoration: none;
+}
+
+/* Main layout styles */
+.container {
+  display: flex;
+  /* Ensures all children elements are displayed in a row */
+}
+
+main {
+  flex: 2; /* Expands to fill available space */
+  padding: 20px;
+  /* Adjusted width to accommodate collapsed sidebar */
+}
+
+.sidebar {
+  background: black;
+  color: white;
+  height: 100vh;
+  width: 100px; /* Initial width when collapsed */
+  transition: width 0.2s; /* Smooth transition for width changes */
+  overflow: hidden;
+  /* Ensures sidebar content that exceeds height is hidden */
+}
+
+.top_section {
+  display: flex;
+  align-items: center;
+  padding: 20px 15px;
+}
+
+.logo {
+  font-size: 30px;
+}
+
+.bars {
+  display: flex;
+  font-size: 25px;
+  margin-left: 30px;
+}
+
+/* Link styles */
+.link {
+  display: flex;
+  color: white;
+  padding: 10px 15px;
+  gap: 15px;
+  transition: background-color 0.2s, color 0.2s; /* Smooth transition for link hover effects */
+}
+
+.link:hover,
+.link.active {
+  background-color: lightblue;
+  color: black;
+}
+
+.icon,
+.link_text {
+  font-size: 20px;
+}
+.btn-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.btn {
+  margin: 10px;
+  padding: 20px 40px; /* Increase padding for larger buttons */
+  background-color: #007bff; /* Blue background color */
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 0.3s; /* Smooth background color transition */
+  width: 32%;
+  height: 155pxc;
+}
+
+.btn:hover {
+  background-color: #0056b3; /* Darker blue background color on hover */
+}
+
+.btn a {
+  color: white;
+  text-decoration: none;
+}
+
+.btn:focus {
+  outline: none; /* Remove focus outline */
+}
+
+.btn:active {
+  transform: translateY(1px); /* Add slight downward shift on button press */
+}

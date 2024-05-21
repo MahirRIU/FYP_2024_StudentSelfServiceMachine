@@ -1,0 +1,44 @@
+/* about.css */
+
+/* Style for the form container */
+.about-container {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  /* Style for form headings */
+  .about-container h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+  
+  /* Style for form inputs and labels */
+  .about-container label {
+    display: block;
+    margin-bottom: 5px;
+  }
+  
+  .about-container input,
+  .about-container select {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  
+  /* Style for submit button */
+  .about-container button {
+    background-color: #4caf50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .about-container button:hover {
+    background-color: #45a049;
+  }
+  
