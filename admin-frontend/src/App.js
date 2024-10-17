@@ -17,7 +17,7 @@ function App() {
         <Route path="/admin/login" element={<LoginAdmin />} />
         <Route path="/admin/dashboard" element={< MenuAdmin/>} />
         <Route path="/admin/user-management" element={< UserManagementAdmin/>} />
-        <Route path="/admin/manage-machines" element={< ActiveMachineAdmin/>} />
+        <Route path="/admin/machine-management" element={< ActiveMachineAdmin/>} />
         <Route path="/admin/transaction-log" element={< TransactionlogAdmin/>} />
         <Route path="/admin/dashboard/manage-students" element={<StudentsPage />} />
         <Route path="/admin/dashboard/manage-departmentmembers" element={<DepartmentMembersPage />} />

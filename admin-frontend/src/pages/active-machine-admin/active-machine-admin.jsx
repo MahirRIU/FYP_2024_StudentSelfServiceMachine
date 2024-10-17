@@ -7,18 +7,16 @@ import Build from '@mui/icons-material/Build';
 import LocationOn from '@mui/icons-material/LocationOn';
 
 const initialMachines = [
-  { id: 1, name: 'Kiosk 1', location: 'Lobby', status: 'Active' },
-  { id: 2, name: 'Kiosk 2', location: 'Cafeteria', status: 'Inactive' },
+  { id: 1, name: 'Kiosk 1', location: 'Lobby'},
+  { id: 2, name: 'Kiosk 2', location: 'Cafeteria'},
 ];
-
-const statuses = ['Active', 'Inactive', 'Maintenance'];
 
 const ActiveMachineAdmin = () => {
   const [machines, setMachines] = useState(initialMachines);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMachines, setSelectedMachines] = useState([]);
   const [showForm, setShowForm] = useState(false);
-  const [formMachine, setFormMachine] = useState({ id: null, name: '', location: '', status: '' });
+  const [formMachine, setFormMachine] = useState({ id: null, name: '', location: ''});
 
   const handleSearch = (event) => {
     setSearchTerm(event.target.value);
@@ -46,7 +44,7 @@ const ActiveMachineAdmin = () => {
     } else {
       setMachines([...machines, { ...formMachine, id: machines.length + 1 }]);
     }
-    setFormMachine({ id: null, name: '', location: '', status: '' });
+    setFormMachine({ id: null, name: '', location: '' });
     setShowForm(false);
   };
 
@@ -57,14 +55,13 @@ const ActiveMachineAdmin = () => {
 
   const filteredMachines = machines.filter((machine) => 
     machine.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    machine.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    machine.status.toLowerCase().includes(searchTerm.toLowerCase())
+    machine.location.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
     <div>
       <Navbar bg="dark" variant="dark" expand="lg" fixed="top">
-        <Navbar.Brand href="/admin/manage-machines">MANAGE MACHINES</Navbar.Brand>
+        <Navbar.Brand href="/admin/manage-machines">MACHINE MANAGEMENT</Navbar.Brand>
       </Navbar>
 
       <Container fluid className="mt-5 pt-3">
@@ -81,7 +78,6 @@ const ActiveMachineAdmin = () => {
               <Dropdown.Menu>
                 <Dropdown.Item>by name</Dropdown.Item>
                 <Dropdown.Item>by location</Dropdown.Item>
-                <Dropdown.Item>by status</Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown>
             <Button variant="primary" onClick={() => setShowForm(true)} className="ml-2">
@@ -96,9 +92,8 @@ const ActiveMachineAdmin = () => {
               <thead>
                 <tr>
                   <th>Select</th>
-                  <th>Name</th>
+                  <th>Machine Id</th>
                   <th>Location</th>
-                  <th>Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -110,7 +105,6 @@ const ActiveMachineAdmin = () => {
                     </td>
                     <td>{machine.name}</td>
                     <td>{machine.location}</td>
-                    <td>{machine.status}</td>
                     <td>
                       <Button variant="warning" size="sm" onClick={() => handleEditMachine(machine)}>
                         <FaEdit />
@@ -134,7 +128,7 @@ const ActiveMachineAdmin = () => {
                   <Card.Title>{formMachine.id ? 'Edit Machine' : 'Create Machine'}</Card.Title>
                   <Form onSubmit={handleFormSubmit} className="machine-form">
                     <Form.Group controlId="formName">
-                      <Form.Label>Name</Form.Label>
+                      <Form.Label>Machine Id</Form.Label>
                       <div className="input-container">
                         <Build className="input-icon" />
                         <Form.Control
@@ -157,16 +151,6 @@ const ActiveMachineAdmin = () => {
                           onChange={handleFormChange}
                           required
                         />
-                      </div>
-                    </Form.Group>
-                    <Form.Group controlId="formStatus">
-                      <Form.Label>Status</Form.Label>
-                      <div className="input-container">
-                        <FormControl as="select" name="status" value={formMachine.status} onChange={handleFormChange}>
-                          {statuses.map((status) => (
-                            <option key={status} value={status}>{status}</option>
-                          ))}
-                        </FormControl>
                       </div>
                     </Form.Group>
                     <Button variant="primary" type="submit">

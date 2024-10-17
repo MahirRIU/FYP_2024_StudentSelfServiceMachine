@@ -20,10 +20,10 @@ const MenuAdmin = () => {
     }, 1300);
   };
 
-  const navigateToManageMachine = () => {
+  const navigateToMachineManagement = () => {
     setIsLoading(true);
     setTimeout(() => {
-      navigate('/admin/manage-machines');
+      navigate('/admin/machine-management');
     }, 1300);
   };
 
@@ -66,14 +66,14 @@ const MenuAdmin = () => {
               </Card>
             </Col>
             <Col md={4}>
-              <Card onClick={navigateToManageMachine} className="clickable-card">
+              <Card onClick={navigateToMachineManagement} className="clickable-card">
                 <Card.Body>
-                  <Card.Title>Manage Machines</Card.Title>
+                  <Card.Title>Machine Management</Card.Title>
                   <div className="custom-card-img-container">
                     <Card.Img variant="top" src={cardImage2} alt="Card image" className='card-img' />
                   </div>
                   <Card.Text>
-                    Monitor your machines.
+                    Manage your machines.
                   </Card.Text>
                 </Card.Body>
               </Card>
