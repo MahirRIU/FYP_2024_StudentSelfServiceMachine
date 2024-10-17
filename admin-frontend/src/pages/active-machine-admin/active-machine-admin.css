@@ -1,0 +1,105 @@
+body {
+    margin: 0;
+    background-color: whitesmoke;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  }
+  
+  .navbar {
+    background-color: #4c74f4 !important;
+    color: white;
+    padding: 5px;
+    position: fixed;
+  }
+  
+  .navbar-brand {
+    color: white !important;
+    font-size: medium;
+    font-weight: bold;
+    margin-left: 20px;
+  }
+  
+  .card {
+    margin-bottom: 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .card-body {
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+  
+  .content {
+    padding: 20px;
+  }
+  
+  .table th, .table td {
+    vertical-align: top;
+  }
+  
+  .d-flex.align-items-left {
+    align-items: flex-start !important;
+  }
+  
+  .mt-5.pt-3 {
+    margin-top: 1rem;
+    padding-top: 1rem;
+  }
+  
+  .mb-3 {
+    margin-bottom: 1rem !important;
+  }
+  
+  .mr-2 {
+    margin-right: 0.5rem !important;
+  }
+  
+  .current-machines-header {
+    display: flexbox;
+    justify-content: space-between;
+    align-items: left;
+  }
+  
+  .current-machines-header h3 {
+    margin-right: auto;
+  }
+  
+  .current-machines-actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .current-machines-header h3 {
+    margin-top: 0;
+  }
+  
+  .current-machines-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+  }
+  
+  .machine-form .input-container {
+    position: relative;
+  }
+  
+  .machine-form .input-icon {
+    position: absolute;
+    top: 50%;
+    left: 10px;
+    transform: translateY(-50%);
+    color: #6c757d;
+  }
+  
+  .machine-form input[type="text"] {
+    padding-left: 35px;
+  }
+  
+  

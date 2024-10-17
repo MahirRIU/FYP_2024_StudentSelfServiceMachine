@@ -1,0 +1,135 @@
+.container {
+  margin-top: 5px;
+  max-width: 1000px; /* Widen the container */
+  margin: 30px auto; /* Moved it upwards */
+  padding: 30px;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 20px; /* Reduced margin-bottom */
+  font-size: 2rem;
+  color: #333;
+}
+
+.table {
+  margin-top: 10px; /* Moved the table upwards */
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  cursor: pointer;
+  text-align: left;
+  padding: 12px;
+  border-bottom: 2px solid #ddd;
+}
+
+.table th:hover {
+  background-color: #f8f9fa;
+}
+
+.table td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+  vertical-align: middle;
+}
+
+.mb-3 {
+  width: 300px;
+  margin: 0 auto;
+  margin-bottom: 20px;
+}
+
+button {
+  margin-right: 10px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.modal-header, .modal-footer {
+  background-color: #f8f9fa;
+}
+
+.modal-title {
+  font-weight: bold;
+}
+
+.form-control {
+  margin-bottom: 10px;
+}
+
+/* Button Styles */
+.btn-primary, .btn-warning, .btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px; /* Space between icon and text */
+  background-color: #007bff;
+  border: none;
+}
+
+.btn-warning {
+  background-color: #ffc107;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+}
+
+/* Icon inside buttons */
+button .icon {
+  font-size: 1rem;
+}
+
+/* Adjust search bar with icon */
+.search-container {
+  position: relative;
+}
+
+.search-container input {
+  padding-left: 30px; /* Adjust space for the icon */
+}
+
+.search-container .search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.2rem;
+  color: #333;
+}
+
+body {
+  margin: 0;
+  background-color: #ccc !important;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+}
+
+.navbar {
+  background-color: #4c74f4 !important;
+  color: white;
+  padding: 0%;
+  position: fixed;
+  width: 100%;
+  z-index: 1000;
+}
+
+.navbar-brand {
+  color: white !important;
+  font-size: medium;
+  font-weight: bold;
+  margin-left: 20px;
+}
+
+.link-profile {
+  color: white !important;
+  font-size: medium;
+  margin-left: 20px;
+}
+
+.img-profile {
+  width: 25px;
+  height: auto;
+  margin-right: 20px;
+}

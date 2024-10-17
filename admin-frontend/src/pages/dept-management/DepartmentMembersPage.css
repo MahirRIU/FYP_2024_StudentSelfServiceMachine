@@ -1,0 +1,57 @@
+.container {
+  margin-top: 20px;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 2rem;
+  color: #333;
+}
+
+.table {
+  margin-top: 20px;
+}
+
+.table th {
+  cursor: pointer;
+}
+
+.table th:hover {
+  background-color: #f8f9fa;
+}
+
+.mb-3 {
+  width: 300px;
+  margin: 0 auto;
+  margin-bottom: 20px;
+}
+
+button {
+  margin-right: 10px;
+}
+
+.modal-header, .modal-footer {
+  background-color: #f8f9fa;
+}
+
+.modal-title {
+  font-weight: bold;
+}
+
+.form-control {
+  margin-bottom: 10px;
+}
+
+.btn-primary, .btn-warning, .btn-danger {
+  background-color: #007bff;
+  border: none;
+}
+
+.btn-warning {
+  background-color: #ffc107;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+}

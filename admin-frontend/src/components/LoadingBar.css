@@ -1,0 +1,30 @@
+/* components/LoadingBar.css */
+.loading-bar-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px; /* Adjust height as needed */
+  z-index: 1050;
+  background-color: transparent;
+  overflow: hidden; /* Ensure the bar doesn't overflow its container */
+}
+
+.loading-bar {
+  height: 100%;
+  background-color: white;
+  width: 30%; /* Ensure the bar covers the width of its container */
+  animation: loading 1s linear infinite;
+}
+
+@keyframes loading {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
