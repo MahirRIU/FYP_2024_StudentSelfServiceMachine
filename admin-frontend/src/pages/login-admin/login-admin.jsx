@@ -51,6 +51,9 @@ const LoginAdmin = () => {
         
         if (response.ok) {
             setError('Login Successful!');
+            // Store admin's name in localStorage for later use
+            localStorage.setItem('adminName', data.admin.name);  
+
             navigateMenuAdmin();
         } else {
             setError(data.message);  // This should be "Invalid username or password"

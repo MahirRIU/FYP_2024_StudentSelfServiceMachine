@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, Navbar, Nav, Row, Col, Card, Image } from 'react-bootstrap';
 import LoadingBar from '../../components/LoadingBar'; 
@@ -12,7 +12,15 @@ import cardImage3 from '../../assets/tl.png';
 const MenuAdmin = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  
+  const [adminName, setAdminName] = useState('');
 
+    // Retrieve the admin's name from localStorage
+  useEffect(() => {
+     const name = localStorage.getItem('adminName');
+      setAdminName(name || 'Admin'); // Fallback to 'Admin' if name is not found
+    }, []);
+  
   const navigateToUserManagement = () => {
     setIsLoading(true);
     setTimeout(() => {
@@ -40,7 +48,7 @@ const MenuAdmin = () => {
         <Navbar.Brand href="#home">ADMINISTRATION</Navbar.Brand>
         <Nav className="ml-auto d-flex align-items-center" style={{ marginLeft: 'auto' }}>
           <Nav.Link  className="d-flex align-items-center">
-            <span style={{ color: 'white', marginRight: '8px' }}>Admin</span>
+            <span style={{ color: 'white', marginRight: '8px' }}>{adminName}</span>
             <Image src={image} alt="profile photo" className='img-profile' roundedCircle />
           </Nav.Link>
         </Nav>

@@ -1,43 +1,63 @@
-import React, { useState } from 'react';
-import { Container, Navbar, Nav, Row, Col, Card, Button, Form, Table, FormControl, Dropdown } from 'react-bootstrap';
-import { FaSearch, FaFilter, FaTrash, FaSync } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { Container, Navbar, Row, Col, Button, FormControl, Table, Dropdown } from 'react-bootstrap';
+import { FaFilter, FaTrash, FaSync } from 'react-icons/fa';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './transaction-log-admin.css';
 
-const initialTransactions = [
-  { id: 1, user: 'John Doe', amount: '100 PKR', date: '2024-06-01 12:34:56', transactionId: 'TXN123456' },
-  { id: 2, user: 'Jane Smith', amount: '50 PKR', date: '2024-06-02 14:23:45', transactionId: 'TXN654321' },
-];
-
 const TransactionLogAdmin = () => {
-  const [transactions, setTransactions] = useState(initialTransactions);
+  const [transactions, setTransactions] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedTransactions, setSelectedTransactions] = useState([]);
+
+  // Load transactions from the server
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/transactions');
+        const data = await response.json();
+        setTransactions(data);
+      } catch (error) {
+        console.error('Error loading transactions:', error);
+      }
+    };
+
+    fetchTransactions();
+  }, []);
 
   const handleSearch = (event) => {
     setSearchTerm(event.target.value);
   };
 
-  const handleSelectTransaction = (id) => {
-    setSelectedTransactions((prevSelected) => 
-      prevSelected.includes(id) ? prevSelected.filter((transactionId) => transactionId !== id) : [...prevSelected, id]
-    );
+  const handleDeleteTransaction = async (id) => {
+    try {
+      console.log('Deleting transaction', id);
+      const response = await fetch(`http://localhost:5000/api/transactions/${id}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        setTransactions(transactions.filter((transaction) => transaction._id !== id));
+      } else {
+        console.log(response);
+        console.error('Failed to delete transaction');
+      }
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+    }
   };
 
-  const handleDeleteTransaction = (id) => {
-    setTransactions(transactions.filter((transaction) => transaction.id !== id));
+  const handleRefreshAllTransactions = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/transactions');
+      const data = await response.json();
+      setTransactions(data);
+    } catch (error) {
+      console.error('Error refreshing transactions:', error);
+    }
   };
-
-  const handleRefreshAllTransactions = () => {
-    alert('Refreshing all transactions');
-    // In a real-world scenario, you would implement logic to refresh all transaction details
-  };
-
   const filteredTransactions = transactions.filter((transaction) => 
-    transaction.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    transaction.amount.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    transaction.date.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    transaction.transactionId.toLowerCase().includes(searchTerm.toLowerCase())
+    transaction.stud_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    String(transaction.amount).includes(searchTerm) || // Convert amount to string for comparison
+    transaction.date?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    transaction.trans_id?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -52,13 +72,19 @@ const TransactionLogAdmin = () => {
             <h3>Current Transactions</h3>
           </Col>
           <Col className="current-transactions-actions d-flex justify-content-end">
-            <FormControl type="text" placeholder="Search transactions..." value={searchTerm} onChange={handleSearch} className="mr-2" />
+            <FormControl
+              type="text"
+              placeholder="Search transactions..."
+              value={searchTerm}
+              onChange={handleSearch}
+              className="mr-2"
+            />
             <Dropdown>
               <Dropdown.Toggle variant="outline-secondary" id="dropdown-basic">
                 <FaFilter />
               </Dropdown.Toggle>
               <Dropdown.Menu>
-                <Dropdown.Item>by user</Dropdown.Item>
+                <Dropdown.Item>by student ID</Dropdown.Item>
                 <Dropdown.Item>by amount</Dropdown.Item>
                 <Dropdown.Item>by date</Dropdown.Item>
                 <Dropdown.Item>by transaction ID</Dropdown.Item>
@@ -81,8 +107,7 @@ const TransactionLogAdmin = () => {
             <Table striped bordered hover>
               <thead>
                 <tr>
-                  <th>Select</th>
-                  <th>User</th>
+                  <th>Student ID</th>
                   <th>Amount</th>
                   <th>Date</th>
                   <th>Transaction ID</th>
@@ -91,16 +116,13 @@ const TransactionLogAdmin = () => {
               </thead>
               <tbody>
                 {filteredTransactions.map((transaction) => (
-                  <tr key={transaction.id}>
-                    <td>
-                      <Form.Check type="checkbox" checked={selectedTransactions.includes(transaction.id)} onChange={() => handleSelectTransaction(transaction.id)} />
-                    </td>
-                    <td>{transaction.user}</td>
+                  <tr key={transaction._id}>
+                    <td>{transaction.stud_id}</td>
                     <td>{transaction.amount}</td>
                     <td>{transaction.date}</td>
-                    <td>{transaction.transactionId}</td>
+                    <td>{transaction.trans_id}</td>
                     <td>
-                      <Button variant="danger" size="sm" onClick={() => handleDeleteTransaction(transaction.id)}>
+                      <Button variant="danger" size="sm" onClick={() => handleDeleteTransaction(transaction._id)}>
                         <FaTrash />
                       </Button>
                     </td>

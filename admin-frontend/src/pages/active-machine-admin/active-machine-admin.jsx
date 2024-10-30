@@ -1,35 +1,73 @@
-import React, { useState } from 'react';
-import { Container, Navbar, Nav, Row, Col, Card, Button, Form, Table, FormControl, Dropdown } from 'react-bootstrap';
-import { FaPlus, FaEdit, FaTrash, FaFilter } from 'react-icons/fa';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import './active-machine-admin.css';
-import Build from '@mui/icons-material/Build';
-import LocationOn from '@mui/icons-material/LocationOn';
-
-const initialMachines = [
-  { id: 1, name: 'Kiosk 1', location: 'Lobby'},
-  { id: 2, name: 'Kiosk 2', location: 'Cafeteria'},
-];
+import React, { useState, useEffect } from "react";
+import {
+  Container,
+  Navbar,
+  Row,
+  Col,
+  Card,
+  Button,
+  Form,
+  Table,
+  FormControl,
+  Dropdown,
+} from "react-bootstrap";
+import { FaPlus, FaEdit, FaTrash, FaFilter } from "react-icons/fa";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "./active-machine-admin.css";
+import Build from "@mui/icons-material/Build";
+import LocationOn from "@mui/icons-material/LocationOn";
 
 const ActiveMachineAdmin = () => {
-  const [machines, setMachines] = useState(initialMachines);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedMachines, setSelectedMachines] = useState([]);
+  const [machines, setMachines] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
-  const [formMachine, setFormMachine] = useState({ id: null, name: '', location: ''});
+  const [formMachine, setFormMachine] = useState({
+    machine_id: "",
+    location: "",
+  });
+  const [filterType, setFilterType] = useState("by id"); // New state for filter type
+
+  const fetchMachines = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/api/machines");
+      if (response.ok) {
+        const data = await response.json();
+        setMachines(data);
+      } else {
+        console.error("Failed to fetch machines");
+      }
+    } catch (error) {
+      console.error("Error fetching machines:", error);
+    }
+  };
+
+  // Load machines from the backend
+  useEffect(() => {
+    fetchMachines();
+  }, []);
 
   const handleSearch = (event) => {
     setSearchTerm(event.target.value);
   };
 
-  const handleSelectMachine = (id) => {
-    setSelectedMachines((prevSelected) => 
-      prevSelected.includes(id) ? prevSelected.filter((machineId) => machineId !== id) : [...prevSelected, id]
-    );
+  const handleFilterChange = (filter) => {
+    setFilterType(filter); // Update filter type when dropdown selection changes
+    setSearchTerm(""); // Reset search term when filter changes
   };
 
-  const handleDeleteMachine = (id) => {
-    setMachines(machines.filter((machine) => machine.id !== id));
+  const handleDeleteMachine = async (id) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/machines/${id}`, {
+        method: "DELETE",
+      });
+      if (response.ok) {
+        setMachines(machines.filter((machine) => machine._id !== id));
+      } else {
+        console.error("Failed to delete machine");
+      }
+    } catch (error) {
+      console.error("Error deleting machine:", error);
+    }
   };
 
   const handleFormChange = (event) => {
@@ -37,31 +75,63 @@ const ActiveMachineAdmin = () => {
     setFormMachine((prevMachine) => ({ ...prevMachine, [name]: value }));
   };
 
-  const handleFormSubmit = (event) => {
+  const handleFormSubmit = async (event) => {
     event.preventDefault();
-    if (formMachine.id) {
-      setMachines(machines.map((machine) => (machine.id === formMachine.id ? formMachine : machine)));
-    } else {
-      setMachines([...machines, { ...formMachine, id: machines.length + 1 }]);
+    try {
+      const method = formMachine.machine_id ? "PUT" : "POST";
+      const endpoint = formMachine.machine_id
+        ? `http://localhost:5000/api/machines/${formMachine.machine_id}`
+        : "http://localhost:5000/api/machines";
+
+      const response = await fetch(endpoint, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formMachine),
+      });
+
+      if (response.ok) {
+        // Re-fetch machines to get the updated list
+        await fetchMachines(); // Call the fetchMachines function after adding/updating
+
+        resetForm(); // Reset form after saving
+      } else {
+        console.error("Failed to save machine");
+      }
+    } catch (error) {
+      console.error("Error saving machine:", error);
     }
-    setFormMachine({ id: null, name: '', location: '' });
-    setShowForm(false);
   };
 
   const handleEditMachine = (machine) => {
-    setFormMachine(machine);
+    setFormMachine({
+      machine_id: machine.machine_id,
+      location: machine.location,
+    });
     setShowForm(true);
   };
 
-  const filteredMachines = machines.filter((machine) => 
-    machine.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    machine.location.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const resetForm = () => {
+    setFormMachine({ machine_id: "", location: "" });
+    setShowForm(false);
+  };
+
+  // Filter machines based on selected filter type and search term
+  const filteredMachines = machines.filter((machine) => {
+    const searchValue = searchTerm.toLowerCase();
+    if (filterType === "by id") {
+      return machine.machine_id.toLowerCase().includes(searchValue);
+    } else if (filterType === "by location") {
+      return machine.location.toLowerCase().includes(searchValue);
+    }
+    return true; // Default case
+  });
 
   return (
     <div>
       <Navbar bg="dark" variant="dark" expand="lg" fixed="top">
-        <Navbar.Brand href="/admin/manage-machines">MACHINE MANAGEMENT</Navbar.Brand>
+        <Navbar.Brand href="/admin/manage-machines">
+          MACHINE MANAGEMENT
+        </Navbar.Brand>
       </Navbar>
 
       <Container fluid className="mt-5 pt-3">
@@ -70,17 +140,34 @@ const ActiveMachineAdmin = () => {
             <h3>Current Machines</h3>
           </Col>
           <Col className="current-machines-actions d-flex justify-content-end">
-            <FormControl type="text" placeholder="Search machines..." value={searchTerm} onChange={handleSearch} className="mr-2" />
-            <Dropdown>
+            <FormControl
+              type="text"
+              placeholder="Search machines..."
+              value={searchTerm}
+              onChange={handleSearch}
+              className="mr-2"
+              style={{ width: "200px" }} // Set your desired width here
+            />
+
+            <Dropdown onSelect={handleFilterChange}>
               <Dropdown.Toggle variant="outline-secondary" id="dropdown-basic">
-                <FaFilter />
+                <FaFilter /> {filterType}
               </Dropdown.Toggle>
               <Dropdown.Menu>
-                <Dropdown.Item>by name</Dropdown.Item>
-                <Dropdown.Item>by location</Dropdown.Item>
+                <Dropdown.Item eventKey="by id">By ID</Dropdown.Item>
+                <Dropdown.Item eventKey="by location">
+                  By Location
+                </Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown>
-            <Button variant="primary" onClick={() => setShowForm(true)} className="ml-2">
+            <Button
+              variant="primary"
+              onClick={() => {
+                resetForm(); // Reset form when adding new machine
+                setShowForm(true);
+              }}
+              className="ml-2"
+            >
               <FaPlus />
             </Button>
           </Col>
@@ -91,7 +178,6 @@ const ActiveMachineAdmin = () => {
             <Table striped bordered hover>
               <thead>
                 <tr>
-                  <th>Select</th>
                   <th>Machine Id</th>
                   <th>Location</th>
                   <th>Actions</th>
@@ -99,17 +185,22 @@ const ActiveMachineAdmin = () => {
               </thead>
               <tbody>
                 {filteredMachines.map((machine) => (
-                  <tr key={machine.id}>
-                    <td>
-                      <Form.Check type="checkbox" checked={selectedMachines.includes(machine.id)} onChange={() => handleSelectMachine(machine.id)} />
-                    </td>
-                    <td>{machine.name}</td>
+                  <tr key={machine._id}>
+                    <td>{machine.machine_id}</td>
                     <td>{machine.location}</td>
                     <td>
-                      <Button variant="warning" size="sm" onClick={() => handleEditMachine(machine)}>
+                      <Button
+                        variant="warning"
+                        size="sm"
+                        onClick={() => handleEditMachine(machine)}
+                      >
                         <FaEdit />
-                      </Button>{' '}
-                      <Button variant="danger" size="sm" onClick={() => handleDeleteMachine(machine.id)}>
+                      </Button>{" "}
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => handleDeleteMachine(machine._id)}
+                      >
                         <FaTrash />
                       </Button>
                     </td>
@@ -125,21 +216,25 @@ const ActiveMachineAdmin = () => {
             <Col>
               <Card>
                 <Card.Body>
-                  <Card.Title>{formMachine.id ? 'Edit Machine' : 'Create Machine'}</Card.Title>
+                  <Card.Title>
+                    {formMachine.machine_id ? "Edit Machine" : "Create Machine"}
+                  </Card.Title>
                   <Form onSubmit={handleFormSubmit} className="machine-form">
-                    <Form.Group controlId="formName">
-                      <Form.Label>Machine Id</Form.Label>
-                      <div className="input-container">
-                        <Build className="input-icon" />
-                        <Form.Control
-                          type="text"
-                          name="name"
-                          value={formMachine.name}
-                          onChange={handleFormChange}
-                          required
-                        />
-                      </div>
-                    </Form.Group>
+                    {/* Show Machine ID only when editing an existing machine */}
+                    {formMachine.machine_id && (
+                      <Form.Group controlId="formMachineId">
+                        <Form.Label>Machine Id</Form.Label>
+                        <div className="input-container">
+                          <Build className="input-icon" />
+                          <Form.Control
+                            type="text"
+                            name="machine_id"
+                            value={formMachine.machine_id}
+                            readOnly // Make this field read-only
+                          />
+                        </div>
+                      </Form.Group>
+                    )}
                     <Form.Group controlId="formLocation">
                       <Form.Label>Location</Form.Label>
                       <div className="input-container">
@@ -154,9 +249,11 @@ const ActiveMachineAdmin = () => {
                       </div>
                     </Form.Group>
                     <Button variant="primary" type="submit">
-                      {formMachine.id ? 'Update Machine' : 'Create Machine'}
-                    </Button>{' '}
-                    <Button variant="secondary" onClick={() => setShowForm(false)}>
+                      {formMachine.machine_id
+                        ? "Update Machine"
+                        : "Create Machine"}
+                    </Button>{" "}
+                    <Button variant="secondary" onClick={resetForm}>
                       Cancel
                     </Button>
                   </Form>
