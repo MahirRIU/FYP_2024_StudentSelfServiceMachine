@@ -1,6 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import './analytics.css';
 
+const generateTransactionId = () => {
+  // Generate a random transaction ID between 1000-9999
+  return Math.floor(1000 + Math.random() * 9000).toString();
+};
+
+const addTransaction = async (transactionData) => {
+  try {
+    const response = await fetch('http://localhost:5000/api/transactions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(transactionData),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to add transaction log');
+    }
+
+    const data = await response.json();
+    console.log('Transaction added:', data);
+  } catch (error) {
+    console.error('Error adding transaction log:', error);
+  }
+};
+
 const Analytics = () => {
   const [submissionMessage, setSubmissionMessage] = useState('');
   const [timerActive, setTimerActive] = useState(false);
@@ -30,7 +56,6 @@ const Analytics = () => {
 
     if (studentData.balance >= 5000) {
       try {
-        // Replace `/api/apply-clearance` with your actual API endpoint for applying clearance
         const response = await fetch('http://localhost:5000/api/users/students/apply-clearance', {
           method: 'POST',
           headers: {
@@ -54,6 +79,17 @@ const Analytics = () => {
           studentData.balance = updatedData.newBalance;
           studentData.clearanceApplied = true;
           localStorage.setItem('userData', JSON.stringify({ user: studentData }));
+
+          // Generate and log the transaction
+          const transactionData = {
+            trans_id: generateTransactionId(),
+            date: new Date().toISOString().split('T')[0], // Current date in YYYY-MM-DD
+            time: new Date().toLocaleTimeString(), // Current time in HH:MM:SS
+            stud_id: studentData._id,
+            amount: 5000,
+          };
+
+          await addTransaction(transactionData); // Log the transaction
         } else {
           const errorData = await response.json();
           setSubmissionMessage(errorData.message || 'Failed to apply for clearance.');

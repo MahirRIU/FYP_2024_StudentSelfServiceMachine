@@ -180,7 +180,18 @@ const DeptDashboard = () => {
 
   const renderTableRows = () => {
     return students
-      .filter((student) => student.clearanceApplied)
+      .filter((student) => {
+        // For Coordination department, filter by faculty
+        if (student.transcript_applied) {
+            return false;
+          }
+          
+        if (deptName === 'Coordination') {
+          return student.clearanceApplied && student.faculty === faculty;
+        }
+        // For other departments, show all students who have applied for clearance
+        return student.clearanceApplied;
+      })
       .map((student) => {
         const commonFields = (
           <>
@@ -189,7 +200,7 @@ const DeptDashboard = () => {
             <td>{student.email}</td>
           </>
         );
-
+  
         const renderStatusButton = (statusField, commentField) => (
           <>
             <td>
@@ -220,7 +231,7 @@ const DeptDashboard = () => {
             </td>
           </>
         );
-
+  
         switch (deptName) {
           case 'Library':
             return (
@@ -273,6 +284,7 @@ const DeptDashboard = () => {
         }
       });
   };
+  
 
   return (
     <div className="dept-dashboard">
