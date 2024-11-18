@@ -1,85 +1,80 @@
 import React, { useState, useEffect } from 'react';
 import './analytics.css';
-import { database } from '../../firebase';
-import { ref, set, get, update } from 'firebase/database';
 
 const Analytics = () => {
-  const [formData, setFormData] = useState({
-    sapId: '',
-    studentName: '',
-    registrationNo: '',
-    fatherName: '',
-    program: '',
-    semester: '',
-    degreeCompleted: false,
-    discontinuing: false,
-  });
-
   const [submissionMessage, setSubmissionMessage] = useState('');
   const [timerActive, setTimerActive] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(0);
+  const [isApplied, setIsApplied] = useState(false);
+  const [registrationNo, setRegistrationNo] = useState('');
+
+  // Retrieve student data from localStorage
+  const studentData = JSON.parse(localStorage.getItem('userData')).user;
 
   useEffect(() => {
-    const fetchTimer = async () => {
+    // Set initial values only once
+    setIsApplied(studentData.clearanceApplied || false);
+    setSubmissionMessage(
+      studentData.clearanceApplied ? 'You have already applied for the clearance form.' : ''
+    );
+    setTimerActive(studentData.timerActive || false);
+    setTimeRemaining(studentData.timeRemaining || 0);
+    setRegistrationNo(studentData.registrationNo || ''); // Set initial registration number
+  }, []); // Empty dependency array to run only once on mount
+
+  const handleApplyForClearance = async () => {
+    if (!registrationNo) {
+      setSubmissionMessage('Please enter your registration number to proceed.');
+      return;
+    }
+
+    if (studentData.balance >= 5000) {
       try {
-        const timerRef = ref(database, 'timer');
-        const snapshot = await get(timerRef);
-        if (snapshot.exists()) {
-          const timerData = snapshot.val();
-          setTimerActive(timerData.active);
-          setTimeRemaining(timerData.remaining);
+        // Replace `/api/apply-clearance` with your actual API endpoint for applying clearance
+        const response = await fetch('http://localhost:5000/api/users/students/apply-clearance', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            id: studentData._id,
+            registrationNo,
+            amount: 5000,
+          }),
+        });
+
+        if (response.ok) {
+          const updatedData = await response.json();
+          setSubmissionMessage('Your clearance form has been submitted successfully.');
+          setIsApplied(true);
+          setTimerActive(true);
+          setTimeRemaining(2 * 24 * 60 * 60); // 2 days in seconds
+
+          // Update local storage with new balance and clearance status
+          studentData.balance = updatedData.newBalance;
+          studentData.clearanceApplied = true;
+          localStorage.setItem('userData', JSON.stringify({ user: studentData }));
+        } else {
+          const errorData = await response.json();
+          setSubmissionMessage(errorData.message || 'Failed to apply for clearance.');
         }
       } catch (error) {
-        console.error('Error fetching timer: ', error);
+        console.error('Error applying for clearance:', error);
+        setSubmissionMessage('An error occurred. Please try again later.');
       }
-    };
-  
-    fetchTimer();
-  }, []);
-  
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    if (type === 'checkbox' && (name === 'degreeCompleted' || name === 'discontinuing')) {
-      setFormData((prevData) => ({
-        ...prevData,
-        degreeCompleted: name === 'degreeCompleted' ? checked : false,
-        discontinuing: name === 'discontinuing' ? checked : false,
-      }));
     } else {
-      setFormData((prevData) => ({
-        ...prevData,
-        [name]: type === 'checkbox' ? checked : value,
-      }));
+      setSubmissionMessage('Insufficient balance to apply for clearance. Please add funds.');
     }
   };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await set(ref(database, 'clearanceForms/' + formData.sapId), formData);
-      setSubmissionMessage('Your form has been submitted successfully');
-      setTimerActive(true);
-      setTimeRemaining(2 * 24 * 60 * 60); // 2 days in seconds
-  
-      // Save timer data to Firebase
-      await set(ref(database, 'timer'), { active: true, remaining: timeRemaining });
-    } catch (error) {
-      console.error('Error submitting form: ', error);
-    }
-  };
-  
-  
 
   useEffect(() => {
     let timer;
     if (timerActive && timeRemaining > 0) {
       timer = setInterval(() => {
         setTimeRemaining((prev) => prev - 1);
-        update(ref(database, 'timer'), { remaining: timeRemaining - 1 });
       }, 1000);
-    } else {
-      clearInterval(timer);
+    } else if (timeRemaining === 0 && timerActive) {
+      setTimerActive(false);
     }
 
     return () => clearInterval(timer);
@@ -97,95 +92,30 @@ const Analytics = () => {
   return (
     <div className="analytics-container">
       <h1>Clearance Form</h1>
-      {!submissionMessage && (
-        <form onSubmit={handleSubmit} className="analytics-form">
-            <div className="form-group">
-          <label>SAP ID:</label>
-          <input
-            type="text"
-            name="sapId"
-            value={formData.sapId}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label>Student Name:</label>
-          <input
-            type="text"
-            name="studentName"
-            value={formData.studentName}
-            onChange={handleChange}
-            required
-          />
-        </div>
+      <div className="student-info">
+        <p>SAP ID: {studentData.sap_id}</p>
+        <p>Student Name: {studentData.name}</p>
+        <p>Balance: ₹{studentData.balance}</p>
         <div className="form-group">
           <label>Registration No:</label>
           <input
             type="text"
-            name="registrationNo"
-            value={formData.registrationNo}
-            onChange={handleChange}
+            value={registrationNo}
+            onChange={(e) => setRegistrationNo(e.target.value)}
             required
+            placeholder="Enter Registration Number"
+            disabled={isApplied} // Disable if already applied
           />
         </div>
-        <div className="form-group">
-          <label>Father Name:</label>
-          <input
-            type="text"
-            name="fatherName"
-            value={formData.fatherName}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label>Program:</label>
-          <input
-            type="text"
-            name="program"
-            value={formData.program}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label>Semester:</label>
-          <input
-            type="text"
-            name="semester"
-            value={formData.semester}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="form-group checkbox-group">
-          <label>
-            <input
-              type="checkbox"
-              name="degreeCompleted"
-              checked={formData.degreeCompleted}
-              onChange={handleChange}
-            />
-            Degree Completed
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              name="discontinuing"
-              checked={formData.discontinuing}
-              onChange={handleChange}
-            />
-            Discontinuing
-          </label>
-        </div>
-        <button type="submit" className="submit-button">Submit</button>
-        </form>
-      )}
-      {submissionMessage && (
+      </div>
+      {!isApplied ? (
+        <button className="apply-button" onClick={handleApplyForClearance}>
+          Apply for Clearance Form (₹5000)
+        </button>
+      ) : (
         <div className="submission-message">
           <p>{submissionMessage}</p>
-          <p>Time remaining: {formatTime(timeRemaining)}</p>
+          {timerActive && <p>Time remaining: {formatTime(timeRemaining)}</p>}
         </div>
       )}
     </div>
