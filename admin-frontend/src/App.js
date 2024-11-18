@@ -10,20 +10,31 @@ import StudentsPage from './pages/students-management/StudentsPage';
 import DepartmentMembersPage from './pages/dept-management/DepartmentMembersPage';
 
 function App() {
-  return ( 
+  return (
     <Router>
       <Routes>
         <Route path="/" element={<Navigate to="/admin/login" replace />} />
         <Route path="/admin/login" element={<LoginAdmin />} />
-        <Route path="/admin/dashboard" element={<MenuAdmin />} />
-        <Route path="/admin/user-management" element={<UserManagementAdmin />} />
-        <Route path="/admin/machine-management" element={<ActiveMachineAdmin />} />
-        <Route path="/admin/transaction-log" element={<TransactionlogAdmin />} />
-        <Route path="/admin/dashboard/manage-students" element={<StudentsPage />} />
-        <Route path="/admin/dashboard/manage-departmentmembers" element={<DepartmentMembersPage />} />
+
+        {/* Protected Routes */}
+        <Route path="/admin/dashboard" element={<PrivateRoute><MenuAdmin /></PrivateRoute>} />
+        <Route path="/admin/user-management" element={<PrivateRoute><UserManagementAdmin /></PrivateRoute>} />
+        <Route path="/admin/machine-management" element={<PrivateRoute><ActiveMachineAdmin /></PrivateRoute>} />
+        <Route path="/admin/transaction-log" element={<PrivateRoute><TransactionlogAdmin /></PrivateRoute>} />
+        <Route path="/admin/dashboard/manage-students" element={<PrivateRoute><StudentsPage /></PrivateRoute>} />
+        <Route path="/admin/dashboard/manage-departmentmembers" element={<PrivateRoute><DepartmentMembersPage /></PrivateRoute>} />
       </Routes>
     </Router>
   );
+}
+
+/**
+ * PrivateRoute component
+ * Redirects unauthenticated users to the login page.
+ */
+function PrivateRoute({ children }) {
+  const isAuthenticated = !!localStorage.getItem('adminAuthToken'); // Check if admin is authenticated
+  return isAuthenticated ? children : <Navigate to="/admin/login" replace />;
 }
 
 export default App;

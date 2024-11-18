@@ -3,7 +3,7 @@ import { Table, Button, Form, Modal, Navbar, Dropdown } from "react-bootstrap";
 import { FaPlus, FaEdit, FaTrash, FaFilter } from "react-icons/fa";
 
 import "./StudentsPage.css";
-import "@fortawesome/fontawesome-free/css/all.min.css"; // Import FontAwesome for icons
+import "@fortawesome/fontawesome-free/css/all.min.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 const StudentsPage = () => {
@@ -11,188 +11,188 @@ const StudentsPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [editIndex, setEditIndex] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [roleFilter, setRoleFilter] = useState("student"); // Default role
+  const [roleFilter, setRoleFilter] = useState("student");
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "" });
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [ph_no, setPhNo] = useState(""); // Phone number state
-  const [program, setProgram] = useState(""); // Program state
-  const [dept_name, setDeptName] = useState(""); // Department name state
-  const [enrollment_status, setEnrollmentStatus] = useState(""); // Enrollment status state
-  const [studentId, setStudentId] = useState(""); // Student ID state
+  const [ph_no, setPhNo] = useState("");
+  const [program, setProgram] = useState("");
+  const [faculty, setFaculty] = useState(""); // New: Faculty state
+  const [department, setDepartment] = useState(""); // New: Department state
+  const [enrollment_status, setEnrollmentStatus] = useState("");
+  const [studentId, setStudentId] = useState("");
+  const [filterType, setFilterType] = useState("Select Filter");
 
-  // Function to fetch students from the backend
+  // Faculty and department options
+  const facultyOptions = {
+    FC: ["BSCS", "BSSE", "MIT"],
+    FMS: ["BBA", "MBA", "HRM"],
+    FE: ["BEE", "BME"],
+    RIPHAH: ["BDS", "MBBS"],
+  };
+
+  // Fetch students from backend
   const fetchStudents = async () => {
     try {
-      console.log(`Fetching students with role: ${roleFilter}`); // Debug log
       const response = await fetch(
         `http://localhost:5000/api/users?role=${roleFilter}`
       );
-      if (!response.ok) {
-        console.error("Failed to fetch students:", response.statusText); // Debug log
-        throw new Error("Failed to fetch students");
-      }
+      if (!response.ok) throw new Error("Failed to fetch students");
+
       const data = await response.json();
-      console.log("Fetched students:", data); // Debug log
       setStudents(data);
     } catch (error) {
       console.error("Error fetching students:", error);
     }
   };
-  const [filterType, setFilterType] = useState("Select Filter");
 
   useEffect(() => {
-    fetchStudents(); // Fetch students when the component mounts
-  }, [roleFilter]); // Re-fetch when roleFilter changes
+    fetchStudents();
+  }, [roleFilter]);
 
   const handleFilterChange = (eventKey) => {
     setFilterType(eventKey);
   };
+
   const handleShowModal = (index = null) => {
     setEditIndex(index);
     if (index !== null) {
-      // Editing mode: populate fields with existing student data
+      // Editing mode
       const student = students[index];
-      console.log("Selected Student Details:", student);
       setName(student.name);
       setEmail(student.email);
-      setPassword(""); // Leave password empty for security
+      setPassword("");
       setPhNo(student.ph_no);
       setProgram(student.program);
-      setDeptName(student.dept_name);
+      setFaculty(student.faculty || "");
+      setDepartment(student.department || "");
       setEnrollmentStatus(student.enrollment_status);
-      setStudentId(student.stud_id); // Set the student ID for editing
+      setStudentId(student.stud_id);
     } else {
-      // Adding mode: clear the fields
+      // Adding mode
       setName("");
       setEmail("");
       setPassword("");
       setPhNo("");
       setProgram("");
-      setDeptName("");
+      setFaculty("");
+      setDepartment("");
       setEnrollmentStatus("");
-      setStudentId(""); // Clear student ID
+      setStudentId("");
     }
     setShowModal(true);
   };
 
   const handleAddOrUpdate = async () => {
-    // If in add mode, validate all required fields
-    if (editIndex === null) { // Only validate for adding a student
-        if (name === "" || email === "" || password === "" || ph_no === "" || program === "" || dept_name === "" || enrollment_status === "") {
-            alert("Please fill out all fields");
-            return;
-        }
+    if (
+      !name ||
+      !email ||
+      !password ||
+      !ph_no ||
+      !program ||
+      !faculty ||
+      !department ||
+      !enrollment_status
+    ) {
+      alert("Please fill out all fields");
+      return;
     }
 
-    // Validate email format
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (email && !emailPattern.test(email)) {
-        alert("Please enter a valid email address");
-        return;
+    if (!emailPattern.test(email)) {
+      alert("Please enter a valid email address");
+      return;
     }
 
-    // Validate phone number (optional: customize as per your requirement)
-    const phonePattern = /^\d{10}$/; // Assuming 10-digit phone numbers
-    if (ph_no && !phonePattern.test(ph_no)) {
-        alert("Please enter a valid phone number (10 digits)");
-        return;
+    const phonePattern = /^\d{10}$/;
+    if (!phonePattern.test(ph_no)) {
+      alert("Please enter a valid phone number (10 digits)");
+      return;
     }
 
     if (editIndex !== null) {
-        // Edit mode: Update the student
-        const updatedStudent = {
-            ...students[editIndex],
-            name,
-            email,
-            password: password !== "" ? password : students[editIndex].password, // Retain old password if not changed
-            ph_no,
-            program,
-            dept_name,
-            enrollment_status,
-        };
+      // Edit mode
+      const updatedStudent = {
+        ...students[editIndex],
+        name,
+        email,
+        password: password || students[editIndex].password,
+        ph_no,
+        program,
+        faculty,
+        department,
+        enrollment_status,
+      };
 
-        try {
-            console.log("Updated student id", updatedStudent._id);
-            const response = await fetch(
-                `http://localhost:5000/api/users/${updatedStudent.role}/${updatedStudent._id}`,
-                {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(updatedStudent),
-                }
-            );
+      try {
+        const response = await fetch(
+          `http://localhost:5000/api/users/${updatedStudent.role}/${updatedStudent._id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updatedStudent),
+          }
+        );
 
-            if (response.ok) {
-                console.log("Updated student:", updatedStudent);
-                await fetchStudents(); // Fetch updated list of students
-            } else {
-                console.error("Failed to update student:", response.statusText);
-                alert("Failed to update student");
-            }
-        } catch (error) {
-            console.error("Error updating student:", error);
+        if (response.ok) {
+          await fetchStudents();
+        } else {
+          alert("Failed to update student");
         }
+      } catch (error) {
+        console.error("Error updating student:", error);
+      }
     } else {
-        // Add mode: Add a new student
-        const newStudent = {
-            name,
-            email,
-            password,
-            role: "student", // Set role directly
-            ph_no,
-            program,
-            dept_name,
-            enrollment_status,
-        };
+      // Add mode
+      const newStudent = {
+        name,
+        email,
+        password,
+        role: "student",
+        ph_no,
+        program,
+        faculty,
+        department,
+        enrollment_status,
+      };
 
+      try {
         const response = await fetch("http://localhost:5000/api/users", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(newStudent),
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newStudent),
         });
 
-        if (response.status === 400) {
-            alert("Student Already Exists");
-        } else if (response.ok) {
-            const createdStudent = await response.json();
-            console.log("Created student:", createdStudent);
-            await fetchStudents(); // Fetch updated list of students
+        if (response.ok) {
+          await fetchStudents();
         } else {
-            alert("Failed to add student");
+          alert("Failed to add student");
         }
+      } catch (error) {
+        console.error("Error adding student:", error);
+      }
     }
 
-    setShowModal(false); // Close the modal
-};
-
+    setShowModal(false);
+  };
 
   const handleDelete = async (index) => {
     const studentToDelete = students[index];
-    console.log("Deleting student:", studentToDelete); // Debug log
 
-    // Send delete request to the server
-    const role = "student"; // Define the role (make sure this is set appropriately)
-    const studentId = studentToDelete._id; // Assuming studentToDelete is defined
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/users/${studentToDelete.role}/${studentToDelete._id}`,
+        { method: "DELETE" }
+      );
 
-    const response = await fetch(
-      `http://localhost:5000/api/users/${role}/${studentId}`, // Include role in the URL
-      {
-        method: "DELETE",
+      if (response.ok) {
+        setStudents((prev) => prev.filter((_, i) => i !== index));
+      } else {
+        alert("Failed to delete student");
       }
-    );
-
-    if (response.ok) {
-      const updatedStudents = students.filter((_, i) => i !== index);
-      setStudents(updatedStudents);
-      console.log("Student deleted successfully"); // Debug log
-    } else {
-      alert("Failed to delete student");
+    } catch (error) {
+      console.error("Error deleting student:", error);
     }
   };
 
@@ -214,25 +214,16 @@ const StudentsPage = () => {
   const filteredStudents = sortedStudents.filter((student) => {
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
     if (filterType === "by name") {
-        return student.name.toLowerCase().includes(lowerCaseSearchTerm);
+      return student.name.toLowerCase().includes(lowerCaseSearchTerm);
     } else if (filterType === "by email") {
-        return student.email.toLowerCase().includes(lowerCaseSearchTerm);
+      return student.email.toLowerCase().includes(lowerCaseSearchTerm);
     } else if (filterType === "by department name") {
-        return student.dept_name.toLowerCase().includes(lowerCaseSearchTerm);
-    } else if (filterType === "by student ID") {
-        return student.stud_id.toLowerCase().includes(lowerCaseSearchTerm);
-    }
-    else if (filterType === "by program") {
+      return student.dept_name.toLowerCase().includes(lowerCaseSearchTerm);
+    } else if (filterType === "by program") {
       return student.program.toLowerCase().includes(lowerCaseSearchTerm);
     }
-    else if (filterType === "by phone number") {
-      return student.ph_no.toLowerCase().includes(lowerCaseSearchTerm);
-    }    else if (filterType === "by enrollment status") {
-      return student.enrollment_status.toLowerCase().includes(lowerCaseSearchTerm);
-    }
-    return true; // No specific filter applied, show all students
-});
-
+    return true;
+  });
 
   const requestSort = (key) => {
     let direction = "ascending";
@@ -262,56 +253,55 @@ const StudentsPage = () => {
         <Dropdown.Menu>
           <Dropdown.Item eventKey="by name">By Name</Dropdown.Item>
           <Dropdown.Item eventKey="by email">By Email</Dropdown.Item>
-          <Dropdown.Item eventKey="by department name">By Department Name</Dropdown.Item>
-          <Dropdown.Item eventKey="by member ID">By Member ID</Dropdown.Item>
+          <Dropdown.Item eventKey="by department name">
+            By Department Name
+          </Dropdown.Item>
           <Dropdown.Item eventKey="by program">By Program</Dropdown.Item>
-          <Dropdown.Item eventKey="by phone number">By Phone Number</Dropdown.Item>
-          <Dropdown.Item eventKey="by enrollment status">By Enrollment Status</Dropdown.Item>
         </Dropdown.Menu>
       </Dropdown>
 
       <Button variant="primary" onClick={() => handleShowModal(null)}>
-        <i className="fas fa-plus icon"></i> Add Student
+        <FaPlus /> Add Student
       </Button>
 
-      <div style={{ maxHeight: "400px", overflowY: "auto" }}>
-        <Table striped bordered hover className="table">
-          <thead>
-            <tr>
-              <th onClick={() => requestSort("name")}>Name</th>
-              <th onClick={() => requestSort("email")}>Email</th>
-              <th>Phone Number</th>
-              <th>Program</th>
-              <th>Department</th>
-              <th>Enrollment Status</th>
-              <th>Actions</th>
+      <Table striped bordered hover className="table">
+        <thead>
+          <tr>
+            <th onClick={() => requestSort("name")}>Name</th>
+            <th onClick={() => requestSort("email")}>Email</th>
+            <th>Phone Number</th>
+            <th>Program</th>
+            <th>Faculty</th>
+            <th>Department</th>
+            <th>Enrollment Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filteredStudents.map((student, index) => (
+            <tr key={student.stud_id}>
+              <td>{student.name}</td>
+              <td>{student.email}</td>
+              <td>{student.ph_no}</td>
+              <td>{student.program}</td>
+              <td>{student.faculty}</td>
+              <td>{student.department}</td>
+              <td>{student.enrollment_status}</td>
+              <td>
+                <Button
+                  variant="warning"
+                  onClick={() => handleShowModal(index)}
+                >
+                  <FaEdit /> Edit
+                </Button>
+                <Button variant="danger" onClick={() => handleDelete(index)}>
+                  <FaTrash /> Delete
+                </Button>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {filteredStudents.map((student, index) => (
-              <tr key={student.stud_id}> {/* Use stud_id for key */}
-                <td>{student.name}</td>
-                <td>{student.email}</td>
-                <td>{student.ph_no}</td>
-                <td>{student.program}</td>
-                <td>{student.dept_name}</td>
-                <td>{student.enrollment_status}</td>
-                <td>
-                  <Button
-                    variant="warning"
-                    onClick={() => handleShowModal(index)}
-                  >
-                    <i className="fas fa-edit icon"></i> Edit
-                  </Button>
-                  <Button variant="danger" onClick={() => handleDelete(index)}>
-                    <i className="fas fa-trash-alt icon"></i> Delete
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      </div>
+          ))}
+        </tbody>
+      </Table>
 
       <Modal show={showModal} onHide={() => setShowModal(false)}>
         <Modal.Header closeButton>
@@ -319,77 +309,86 @@ const StudentsPage = () => {
         </Modal.Header>
         <Modal.Body>
           <Form>
-            {editIndex !== null && (
-              <Form.Group controlId="formStudentId">
-                <Form.Label>Student ID</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={studentId}
-                  readOnly // Make the student ID read-only
-                />
-              </Form.Group>
-            )}
-            <Form.Group controlId="formStudentName">
+            <Form.Group>
               <Form.Label>Name</Form.Label>
               <Form.Control
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                required
               />
             </Form.Group>
-            <Form.Group controlId="formStudentEmail">
+            <Form.Group>
               <Form.Label>Email</Form.Label>
               <Form.Control
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
               />
             </Form.Group>
-            <Form.Group controlId="formStudentPassword">
+            <Form.Group>
               <Form.Label>Password</Form.Label>
               <Form.Control
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required
               />
             </Form.Group>
-            <Form.Group controlId="formStudentPhone">
+            <Form.Group>
               <Form.Label>Phone Number</Form.Label>
               <Form.Control
                 type="text"
                 value={ph_no}
                 onChange={(e) => setPhNo(e.target.value)}
-                required
               />
             </Form.Group>
-            <Form.Group controlId="formStudentProgram">
+            <Form.Group>
               <Form.Label>Program</Form.Label>
               <Form.Control
                 type="text"
                 value={program}
                 onChange={(e) => setProgram(e.target.value)}
-                required
               />
             </Form.Group>
-            <Form.Group controlId="formStudentDepartment">
+            <Form.Group>
+              <Form.Label>Faculty</Form.Label>
+              <Form.Control
+                as="select"
+                value={faculty}
+                onChange={(e) => {
+                  setFaculty(e.target.value);
+                  setDepartment("");
+                }}
+              >
+                <option value="">Select Faculty</option>
+                {Object.keys(facultyOptions).map((fac) => (
+                  <option key={fac} value={fac}>
+                    {fac}
+                  </option>
+                ))}
+              </Form.Control>
+            </Form.Group>
+            <Form.Group>
               <Form.Label>Department</Form.Label>
               <Form.Control
-                type="text"
-                value={dept_name}
-                onChange={(e) => setDeptName(e.target.value)}
-                required
-              />
+                as="select"
+                value={department}
+                onChange={(e) => setDepartment(e.target.value)}
+                disabled={!faculty}
+              >
+                <option value="">Select Department</option>
+                {facultyOptions[faculty]?.map((dept) => (
+                  <option key={dept} value={dept}>
+                    {dept}
+                  </option>
+                ))}
+              </Form.Control>
             </Form.Group>
-            <Form.Group controlId="formStudentEnrollment">
+            <Form.Group>
               <Form.Label>Enrollment Status</Form.Label>
               <Form.Control
                 type="text"
                 value={enrollment_status}
                 onChange={(e) => setEnrollmentStatus(e.target.value)}
-                required
               />
             </Form.Group>
           </Form>
@@ -403,7 +402,7 @@ const StudentsPage = () => {
           </Button>
         </Modal.Footer>
       </Modal>
-   </div>
+    </div>
   );
 };
 

@@ -11,12 +11,16 @@ const DepartmentMembersPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "" });
   const [errors, setErrors] = useState({});
+  const [selectedFaculty, setSelectedFaculty] = useState(""); // Faculty selection for Coordination
 
   const nameRef = useRef(null);
   const emailRef = useRef(null);
   const passwordRef = useRef(null);
   const deptNameRef = useRef(null);
   const deptMemIdRef = useRef(null);
+  const facultyRef = useRef(null); // Faculty ref for Coordination
+
+  const faculties = ["FC", "FMS", "RIPHAH", "FE"]; // Faculties for Coordination
 
   const fetchDepartmentMembers = async () => {
     try {
@@ -35,7 +39,7 @@ const DepartmentMembersPage = () => {
   };
 
   const [filterType, setFilterType] = useState("Select Filter");
-  
+
   useEffect(() => {
     fetchDepartmentMembers();
   }, []);
@@ -55,6 +59,7 @@ const DepartmentMembersPage = () => {
         if (emailRef.current) emailRef.current.value = member.email;
         if (passwordRef.current) passwordRef.current.value = member.password;
         if (deptNameRef.current) deptNameRef.current.value = member.dept_name;
+        if (facultyRef.current) facultyRef.current.value = member.faculty || "";
         if (deptMemIdRef.current)
           deptMemIdRef.current.value = member.dept_mem_id;
       } else {
@@ -62,6 +67,7 @@ const DepartmentMembersPage = () => {
         if (emailRef.current) emailRef.current.value = "";
         if (passwordRef.current) passwordRef.current.value = "";
         if (deptNameRef.current) deptNameRef.current.value = "";
+        if (facultyRef.current) facultyRef.current.value = "";
         if (deptMemIdRef.current) deptMemIdRef.current.value = "";
       }
     }, 0);
@@ -81,6 +87,12 @@ const DepartmentMembersPage = () => {
     }
     if (!deptNameRef.current?.value)
       errors.deptName = "Department name is required.";
+    if (
+      deptNameRef.current?.value === "Coordination" &&
+      !facultyRef.current?.value
+    ) {
+      errors.faculty = "Faculty is required for Coordination.";
+    }
     setErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -92,6 +104,8 @@ const DepartmentMembersPage = () => {
     const email = emailRef.current.value;
     const password = passwordRef.current.value;
     const dept_name = deptNameRef.current.value;
+    const faculty =
+      dept_name === "Coordination" ? facultyRef.current.value : null;
     const dept_mem_id = deptMemIdRef.current?.value || "";
 
     let role = "deptMember";
@@ -101,6 +115,7 @@ const DepartmentMembersPage = () => {
         email,
         password,
         dept_name,
+        faculty,
         dept_mem_id,
         role,
       };
@@ -121,7 +136,7 @@ const DepartmentMembersPage = () => {
         alert("Failed to update department member");
       }
     } else {
-      const newMember = { name, email, password, dept_name, dept_mem_id, role };
+      const newMember = { name, email, password, dept_name, faculty, dept_mem_id, role };
       const response = await fetch("http://localhost:5000/api/users", {
         method: "POST",
         headers: {
@@ -184,7 +199,7 @@ const DepartmentMembersPage = () => {
     } else if (filterType === "by member ID") {
       return departmentMember.dept_mem_id.toLowerCase().includes(lowerCaseSearchTerm);
     }
-    return true; // No filter applied
+    return true;
   });
 
   const requestSort = (key) => {
@@ -215,7 +230,9 @@ const DepartmentMembersPage = () => {
         <Dropdown.Menu>
           <Dropdown.Item eventKey="by name">By Name</Dropdown.Item>
           <Dropdown.Item eventKey="by email">By Email</Dropdown.Item>
-          <Dropdown.Item eventKey="by department name">By Department Name</Dropdown.Item>
+          <Dropdown.Item eventKey="by department name">
+            By Department Name
+          </Dropdown.Item>
           <Dropdown.Item eventKey="by member ID">By Member ID</Dropdown.Item>
         </Dropdown.Menu>
       </Dropdown>
@@ -233,6 +250,7 @@ const DepartmentMembersPage = () => {
             <th onClick={() => requestSort("dept_mem_id")}>
               Department Member ID
             </th>
+            <th>Faculty</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -243,6 +261,7 @@ const DepartmentMembersPage = () => {
               <td>{departmentMember.email}</td>
               <td>{departmentMember.dept_name}</td>
               <td>{departmentMember.dept_mem_id}</td>
+              <td>{departmentMember.faculty || "N/A"}</td>
               <td>
                 <Button
                   variant="warning"
@@ -306,14 +325,46 @@ const DepartmentMembersPage = () => {
             <Form.Group>
               <Form.Label>Department Name</Form.Label>
               <Form.Control
-                type="text"
+                as="select"
                 ref={deptNameRef}
                 isInvalid={!!errors.deptName}
-              />
+                onChange={(e) => {
+                  if (e.target.value !== "Coordination") {
+                    setSelectedFaculty("");
+                  }
+                }}
+              >
+                <option value="">Select Department</option>
+                <option value="SSD">SSD</option>
+                <option value="Library">Library</option>
+                <option value="Fee">Fee</option>
+                <option value="Exam">Exam</option>
+                <option value="Coordination">Coordination</option>
+              </Form.Control>
               <Form.Control.Feedback type="invalid">
                 {errors.deptName}
               </Form.Control.Feedback>
             </Form.Group>
+            {deptNameRef.current?.value === "Coordination" && (
+              <Form.Group>
+                <Form.Label>Faculty</Form.Label>
+                <Form.Control
+                  as="select"
+                  ref={facultyRef}
+                  isInvalid={!!errors.faculty}
+                >
+                  <option value="">Select Faculty</option>
+                  {faculties.map((fac) => (
+                    <option key={fac} value={fac}>
+                      {fac}
+                    </option>
+                  ))}
+                </Form.Control>
+                <Form.Control.Feedback type="invalid">
+                  {errors.faculty}
+                </Form.Control.Feedback>
+              </Form.Group>
+            )}
             {editIndex !== null && (
               <Form.Group controlId="departmentMemberDeptMemId">
                 <Form.Label>Department Member ID</Form.Label>

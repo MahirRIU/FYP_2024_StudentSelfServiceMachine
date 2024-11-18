@@ -17,52 +17,59 @@ const LoginAdmin = () => {
   const [error, setError] = useState('');
   const [validationErrors, setValidationErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const navigate = useNavigate();
 
-  const navigateMenuAdmin = () => {
+  const navigateToDashboard = () => {
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
-      navigate('/admin/dashboard'); // Redirect to the admin dashboard on success
+      navigate('/admin/dashboard');
     }, 1500);
   };
 
   const validateLoginForm = () => {
     const errors = {};
-    if (!username) errors.username = 'The username field is required';
-    if (!password) errors.password = 'The password field is required';
+    if (!username.trim()) errors.username = 'The username field is required.';
+    if (!password.trim()) errors.password = 'The password field is required.';
     return errors;
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    const errors = validateLoginForm();
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      return;
+    }
 
     try {
-        const response = await fetch('http://localhost:5000/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ username, password }),  // Check that username and password are correct here
-        });
+      setIsLoading(true);
+      const response = await fetch('http://localhost:5000/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password, role: 'admin' }),
+      });
 
-        const data = await response.json();
-        
-        if (response.ok) {
-            setError('Login Successful!');
-            // Store admin's name in localStorage for later use
-            localStorage.setItem('adminName', data.admin.name);  
+      const data = await response.json();
 
-            navigateMenuAdmin();
-        } else {
-            setError(data.message);  // This should be "Invalid username or password"
-        }
+      if (response.ok) {
+        setError('Login Successful!');
+        localStorage.setItem('adminName', data.user.name);
+        localStorage.setItem('adminAuthToken', data.token);
+        navigateToDashboard();
+      } else {
+        setError(data.message || 'Invalid username or password');
+      }
     } catch (error) {
-        setError('An error occurred. Please try again.');
+      console.error('Error during login:', error);
+      setError('An error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
-};
-
+  };
 
   const toggleShowPassword = () => {
     setShowPassword(!showPassword);
@@ -102,6 +109,7 @@ const LoginAdmin = () => {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 onFocus={() => handleFocus('username')}
+                placeholder="Enter your username"
               />
             </div>
             {validationErrors.username && (
@@ -113,12 +121,12 @@ const LoginAdmin = () => {
             <div className="password-input-container">
               <Lock className="input-icon" />
               <input
-                className="input-with-icon"
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? 'text' : 'password'}
                 id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onFocus={() => handleFocus('password')}
+                placeholder="Enter your password"
               />
               <div className="toggle-password" onClick={toggleShowPassword}>
                 {showPassword ? <VisibilityOff /> : <Visibility />}
@@ -129,7 +137,6 @@ const LoginAdmin = () => {
                 <p className="small-error-message">{validationErrors.password}</p>
               </div>
             )}
-            <a href="#" className="forgot-password">Forgot Password?</a>
             <button type="submit">Login</button>
           </form>
         </div>
