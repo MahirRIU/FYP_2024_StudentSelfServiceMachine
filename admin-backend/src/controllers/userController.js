@@ -16,25 +16,24 @@ const connectToDb = async () => {
 
 // Add User
 const addUser = async (req, res) => {
-    // Destructure common fields from the request body
     const {
         name,
         email,
         password,
         role,
-        ph_no,            // Phone number of the student
-        program,          // Program the student is enrolled in
-        dept_name,        // Department name of the student
-        enrollment_status  // Enrollment status of the student
+        ph_no,
+        program,
+        dept_name,
+        enrollment_status,
+        faculty,
     } = req.body;
 
     try {
         await connectToDb();
 
-        // Set the collection name based on the role
-        const collection = getCollection(role); // Get the appropriate collection based on role
+        const collection = getCollection(role);
 
-        console.log("role =", role, "collectionName =", collection.collectionName); // Log the role and collection for debugging
+        console.log("role =", role, "collectionName =", collection.collectionName);
 
         // Check if a user with the same email already exists
         const existingUser = await collection.findOne({ email });
@@ -42,55 +41,78 @@ const addUser = async (req, res) => {
             return res.status(400).json({ message: 'Email already exists' });
         }
 
-        // Create the new user object
-        const newUser = { 
-            name, 
-            email, 
-            password, 
+        // Initialize the new user object
+        const newUser = {
+            name,
+            email,
+            password,
             role,
-            dept_name
+            dept_name,
+            faculty,
         };
-        newUser.name = name;
-        newUser.email = email;
-        newUser.password = password;
-        newUser.role = role;
-        newUser.dept_name = dept_name;
 
-        // Add specific fields based on role
+        // Add default values only for students
         if (role === 'student') {
-            newUser.ph_no = ph_no;            // Add phone number
-            newUser.program = program;         // Add program
-            newUser.enrollment_status = enrollment_status; // Set to 'Enrolled'
+            const defaultValues = {
+                fee_dept_status: false,
+                semester_completion: "In Progress",
+                earned_credits: 0,
+                required_credits: 120,
+                cgpa: 0.0,
+                course_completion_status: "Not started",
+                coordination_dept_status: false,
+                graduation_status: "Not eligible",
+                result_status: "Pending",
+                exam_clearance_status: "Not Cleared",
+                exam_dept_status: false,
+                books_borrowed: 0,
+                fine_amount: 0,
+                library_dept_status: false,
+                enrollment_status: enrollment_status || "Not Enrolled",
+                ssd_dept_status: false,
+                comments: [],
+                balance: 0,
+                clearanceApplied: false,
+                books_returned: 0,
+                library_dept_comment: "",
+                remaining_fee: 0,
+                total_fee: 0,
+                exam_dept_comment: "",
+                fee_dept_comment: "",
+                ssd_dept_comment: "",
+                coordination_dept_comment: "",
+                faculty: faculty || "Unknown",
+            };
+
+            newUser.ph_no = ph_no || ""; // Set default phone number if not provided
+            newUser.program = program || "Undeclared"; // Set default program if not provided
+            Object.assign(newUser, defaultValues); // Add default values for students
         }
 
         console.log("User data before insertion:", newUser);
 
         // Insert the new user into the database
         const result = await collection.insertOne(newUser);
-        
-        // Get the ID of the newly created document
+
         const insertedId = result.insertedId;
         console.log("Inserted ID:", insertedId);
 
-        // Update the newUser object with stud_id if the role is 'student'
+        // Update the newUser object with `stud_id` or `dept_mem_id`
         if (role === 'student') {
             await collection.updateOne(
                 { _id: insertedId },
                 { $set: { stud_id: insertedId.toString() } }
             );
-            newUser.stud_id = insertedId.toString(); // Add stud_id to the newUser object
-        }
-        else{
+            newUser.stud_id = insertedId.toString();
+        } else {
             await collection.updateOne(
                 { _id: insertedId },
                 { $set: { dept_mem_id: insertedId.toString() } }
             );
-            newUser.stud_id = insertedId.toString(); // Add stud_id to the newUser object
-
+            newUser.dept_mem_id = insertedId.toString();
         }
 
-        // Construct the response user object
-        res.status(201).json({ message: 'User added successfully', user: newUser }); 
+        res.status(201).json({ message: 'User added successfully', user: newUser });
         console.log("User added successfully", newUser);
     } catch (error) {
         console.error('Error adding user:', error);
@@ -159,7 +181,22 @@ const searchUser = async (req, res) => {
         res.status(500).json({ message: 'Server error. Please try again later.' });
     }
 };
-
+const fetchClearanceStudents = async (req, res) => {
+    try {
+      await client.connect();
+      const db = client.db(mongoConfig.dbName);
+      const collection = db.collection('Students'); // Assuming collection name is 'Students'
+  
+      // Query for students with clearanceApplied = true
+      const students = await collection.find({ clearanceApplied: true }).toArray();
+  
+      res.status(200).json(students);
+    } catch (error) {
+      console.error('Error fetching clearance students:', error);
+      res.status(500).json({ message: 'Server error. Please try again later.' });
+    }
+  };
+  
 // Update User
 const updateUser = async (req, res) => {
     const { id } = req.params;
@@ -212,10 +249,164 @@ const getCollection = (role) => {
     }
     throw new Error('Invalid role');
 };
+const modifyStudentBalance = async (req, res) => {
+    const { id } = req.params; // Student ID
+    const { action, amount } = req.body; // Action can be 'get', 'add', or 'subtract'
+    console.log("inside modify student");
+    try {
+        await connectToDb();
+        const collection = getCollection('student'); // Get the Students collection
 
+        // Fetch the student's current balance
+        const student = await collection.findOne({ _id: new ObjectId(id) });
+        if (!student) {
+            return res.status(404).json({ message: 'Student not found' });
+        }
+
+        let updatedBalance = student.balance || 0; // Default balance to 0 if not found
+
+        // Perform the requested operation
+        if (action === 'get') {
+            // Simply return the current balance
+            return res.status(200).json({ balance: updatedBalance });
+        } else if (action === 'add') {
+            updatedBalance += amount;
+        } else if (action === 'subtract') {
+            updatedBalance -= amount;
+        } else {
+            return res.status(400).json({ message: 'Invalid action' });
+        }
+
+        // Update the student's balance in the database
+        await collection.updateOne(
+            { _id: new ObjectId(id) },
+            { $set: { balance: updatedBalance } }
+        );
+
+        // Return the updated balance
+        res.status(200).json({ balance: updatedBalance });
+    } catch (error) {
+        console.error('Error modifying student balance:', error);
+        res.status(500).json({ message: 'Server error. Please try again later.' });
+    }
+};
+const applyClearance = async (req, res) => {
+    const { id, registrationNo, amount } = req.body; // Use `id` for MongoDB _id
+
+    try {
+        await connectToDb();
+        const collection = getCollection('student');
+
+        // Find the user by MongoDB _id
+        const user = await collection.findOne({ _id: new ObjectId(id) });
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Check if the user has sufficient balance
+        if (user.balance < amount) {
+            return res.status(400).json({ message: 'Insufficient balance to apply for clearance' });
+        }
+
+        // Deduct the amount and update the clearance status
+        const updatedBalance = user.balance - amount;
+        const updateResult = await collection.updateOne(
+            { _id: new ObjectId(id) },
+            { 
+                $set: {
+                    balance: updatedBalance,
+                    clearanceApplied: true,
+                    registrationNo: registrationNo 
+                }
+            }
+        );
+
+        if (updateResult.modifiedCount === 1) {
+            res.status(200).json({ message: 'Clearance form applied successfully', newBalance: updatedBalance });
+        } else {
+            res.status(500).json({ message: 'Failed to apply clearance form. Please try again later.' });
+        }
+    } catch (error) {
+        console.error('Error applying for clearance:', error);
+        res.status(500).json({ message: 'Server error. Please try again later.' });
+    }
+};
+
+// Update Student Status Function
+const updateStudentStatus = async (req, res) => {
+    const { studentId } = req.params; // Get the student ID from the URL
+    const { statusField, commentField, newStatus, comment } = req.body; // Data from the request body
+
+    // Allowed status and comment fields for departments
+    const allowedFields = [
+        'library_dept_status',
+        'library_dept_comment',
+        'coordination_dept_status',
+        'coordination_dept_comment',
+        'exam_dept_status',
+        'exam_dept_comment',
+        'fee_dept_status',
+        'fee_dept_comment',
+        'ssd_dept_status',
+        'ssd_dept_comment',
+    ];
+
+    try {
+        console.log('Received parameters:', { studentId, statusField, commentField, newStatus, comment });
+
+        // Get the Students collection using the shared logic
+        const collection = getCollection('student');
+        console.log('Connected to the collection: student');
+
+        // Validate student ID
+        if (!ObjectId.isValid(studentId)) {
+            console.error('Invalid student ID:', studentId);
+            return res.status(400).json({ message: 'Invalid student ID' });
+        }
+        console.log('Validated student ID:', studentId);
+
+        // Validate the statusField and commentField
+        if (!allowedFields.includes(statusField) || !allowedFields.includes(commentField)) {
+            console.error('Invalid status or comment field:', { statusField, commentField });
+            return res.status(400).json({ message: 'Invalid status or comment field' });
+        }
+        console.log('Validated fields:', { statusField, commentField });
+
+        // Update the student's status and comment
+        console.log('Attempting to update student record:', {
+            studentId,
+            updates: { [statusField]: newStatus, [commentField]: comment },
+        });
+        const result = await collection.updateOne(
+            { _id: new ObjectId(studentId) },
+            { $set: { [statusField]: newStatus, [commentField]: comment } }
+        );
+
+        console.log('Update result:', result);
+
+        if (result.modifiedCount === 1) {
+            console.log('Student status updated successfully');
+            res.status(200).json({ message: 'Student status updated successfully' });
+        } else {
+            console.warn('Student not found or no changes made:', studentId);
+            res.status(404).json({ message: 'Student not found or no changes made' });
+        }
+    } catch (error) {
+        console.error('Error updating student status:', error);
+        res.status(500).json({ message: 'Server error. Please try again later.' });
+    }
+};
+
+  
+  
 module.exports = {
     addUser,
     deleteUser,
     searchUser,
     updateUser,
+    modifyStudentBalance,
+    applyClearance,
+    fetchClearanceStudents,
+    updateStudentStatus
 };
