@@ -1,5 +1,7 @@
 const { MongoClient, ObjectId } = require('mongodb');
 const mongoConfig = require('../config/config'); // Adjust the path accordingly
+const { PDFDocument, StandardFonts } = require('pdf-lib');
+const fs = require('fs');
 
 const client = new MongoClient(mongoConfig.uri);
 
@@ -12,7 +14,12 @@ const connectToDb = async () => {
         throw error; // Re-throw the error to handle it in the calling function
     }
 };
-
+function getRandomInt(min, max) {
+    // Ensure min and max are inclusive
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+  
+  
 
 // Add User
 const addUser = async (req, res) => {
@@ -57,9 +64,11 @@ const addUser = async (req, res) => {
                 fee_dept_status: false,
                 semester_completion: "In Progress",
                 earned_credits: 0,
+                sap_id: getRandomInt(1000, 10000),
                 required_credits: 120,
                 cgpa: 0.0,
                 course_completion_status: "Not started",
+                transcript_applied: false,
                 coordination_dept_status: false,
                 graduation_status: "Not eligible",
                 result_status: "Pending",
@@ -71,7 +80,7 @@ const addUser = async (req, res) => {
                 enrollment_status: enrollment_status || "Not Enrolled",
                 ssd_dept_status: false,
                 comments: [],
-                balance: 0,
+                balance: 10000,
                 clearanceApplied: false,
                 books_returned: 0,
                 library_dept_comment: "",
@@ -121,6 +130,59 @@ const addUser = async (req, res) => {
 };
 
 
+
+const applyTranscript = async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        await connectToDb();
+        const collection = client.db(mongoConfig.dbName).collection('Students');
+        console.log("id: ",id);
+        // Fetch the student
+        const student = await collection.findOne({ _id: new ObjectId(id) });
+        if (!student) {
+            return res.status(404).json({ message: 'Student not found' });
+        }
+
+        if (student.transcript_applied) {
+            return res.status(400).json({ message: 'You have already applied for the transcript.' });
+        }
+
+        // Update the transcript_applied field
+        await collection.updateOne({ _id: new ObjectId(id) }, { $set: { transcript_applied: true } });
+
+        // Generate a PDF
+        const pdfDoc = await PDFDocument.create();
+        const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
+
+        const page = pdfDoc.addPage([600, 400]);
+        const { width, height } = page.getSize();
+        const fontSize = 12;
+
+        page.drawText(`Student Transcript`, {
+            x: 50,
+            y: height - 50,
+            size: 18,
+            font: timesRomanFont,
+        });
+
+        page.drawText(`Name: ${student.name}`, { x: 50, y: height - 100, size: fontSize });
+        page.drawText(`Email: ${student.email}`, { x: 50, y: height - 120, size: fontSize });
+        page.drawText(`Program: ${student.program}`, { x: 50, y: height - 140, size: fontSize });
+        page.drawText(`SAP ID: ${student.sap_id}`, { x: 50, y: height - 160, size: fontSize });
+
+        // Serialize the PDF to bytes
+        const pdfBytes = await pdfDoc.save();
+
+        // Send the PDF to the client
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename=transcript.pdf');
+        res.send(Buffer.from(pdfBytes));
+    } catch (error) {
+        console.error('Error applying for transcript:', error);
+        res.status(500).json({ message: 'Server error. Please try again later.' });
+    }
+};
 
 
 
@@ -408,5 +470,6 @@ module.exports = {
     modifyStudentBalance,
     applyClearance,
     fetchClearanceStudents,
-    updateStudentStatus
+    updateStudentStatus,
+    applyTranscript
 };

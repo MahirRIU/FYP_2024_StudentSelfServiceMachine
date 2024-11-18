@@ -7,7 +7,8 @@ const {
     modifyStudentBalance,
     applyClearance,
     fetchClearanceStudents,
-    updateStudentStatus
+    updateStudentStatus,
+    applyTranscript,
 } = require('../controllers/userController'); // Adjust the path accordingly
 
 const router = express.Router();
@@ -27,4 +28,5 @@ router.put('/users/:role/:id', updateUser);
 router.get('/users/clearance-students', fetchClearanceStudents);
 router.patch('/users/update-student-status/:studentId', updateStudentStatus);
 
+router.patch('/users/:id/apply-transcript',applyTranscript);
 module.exports = router;
